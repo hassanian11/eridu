@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        /* 1. خلفية متحركة */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(120deg, #cd7f32, #d4af37);
+            animation: gradientBackground 10s ease infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBackground {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 2. تأثير الحركة على النصوص */
+        h1 {
+            color: #fff;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        p {
+            color: #fff;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 2s ease-in-out 0.5s;
+        }
+
+        /* 3. تأثير التلاشي */
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 4. تأثير اهتزاز للزر */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* 5. تنسيق الزر */
+        button {
+            background-color: #d4af37;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: fadeIn 2s ease-in-out 1s;
+        }
+
+        /* 6. تأثير الحركة عند المرور على الزر */
+        button:hover {
+            transform: scale(1.1);
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 7. تأثير اهتزاز عند النقر على الزر */
+        button:active {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        /* 8. المؤشر المتحرك */
+        .loading {
+            display: none;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .bubble:nth-child(1) {
+            width: 60px;
+            height: 60px;
+            bottom: 10%;
+            left: 10%;
+            animation-duration: 6s;
+        }
+
+        .bubble:nth-child(2) {
+            width: 100px;
+            height: 100px;
+            bottom: 20%;
+            right: 15%;
+            animation-duration: 8s;
+        }
+
+        .bubble:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            top: 15%;
+            left: 25%;
+            animation-duration: 5s;
+        }
+
+        /* 9. فاصل متحرك للنص عند التحميل */
+        .fadeText {
+            opacity: 0;
+            animation: fadeInText 2s ease-out forwards;
+        }
+
+        @keyframes fadeInText {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- فقاعات متحركة لإضافة تأثير جمالي -->
+<div class="bubble"></div>
+<div class="bubble"></div>
+<div class="bubble"></div>
+
+<div>
+    <h1 class="fadeText">مرحبًا في Eridu</h1>
+    <p class="fadeText">قم بتسجيل الدخول باستخدام جوجل لتبدأ رحلتك معنا</p>
+    <button id="loginButton">
+        <i class="fab fa-google"></i>
+        تسجيل الدخول باستخدام جوجل
+    </button>
+    <p class="loading" id="loadingMessage">
+        <i class="fas fa-spinner fa-spin"></i> جاري تسجيل الدخول... يرجى الانتظار
+    </p>
+</div>
+
+<script>
+    // إعداد Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL8RMf_qcV5NhGGaVoFRGUPCIDH08m-w4",
+        authDomain: "erido-332b4.firebaseapp.com",
+        projectId: "erido-332b4",
+        storageBucket: "erido-332b4.firebasestorage.app",
+        messagingSenderId: "297084740609",
+        appId: "1:297084740609:web:0b34d8d756057fb5c18c00"
+    };
+
+    // تهيئة Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // إعداد Google Auth Provider
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    // التفاعل مع الزر لتسجيل الدخول باستخدام جوجل
+    document.getElementById("loginButton").addEventListener("click", () => {
+        const loginButton = document.getElementById("loginButton");
+        const loadingMessage = document.getElementById("loadingMessage");
+
+        // إظهار رسالة التحميل وإخفاء الزر
+        loadingMessage.style.display = "block";
+        loginButton.style.display = "none";
+
+        auth.signInWithPopup(provider).then((result) => {
+            const user = result.user;
+            console.log("User signed in: ", user);
+
+            // الحصول على التوكن بعد تسجيل الدخول بنجاح
+            user.getIdToken().then((idToken) => {
+                // إرسال التوكن إلى الخادم للتحقق منه
+                $.ajax({
+                    url: 'http://localhost:3000/verifyToken',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ token: idToken }),
+                    success: function(response) {
+                        console.log(response);
+                        // إذا كان التوكن صالحًا، توجيه المستخدم إلى الصفحة الرئيسية
+                        window.location.href = '/dashboard.html';
+                    },
+                    error: function(err) {
+                        console.error('Error verifying token:', err);
+                        alert('حدث خطأ أثناء التحقق من التوكن');
+                        // في حال حدوث خطأ، إخفاء التحميل وإظهار الزر مرة أخرى
+                        loadingMessage.style.display = "none";
+                        loginButton.style.display = "block";
+                    }
+                });
+            });
+        }).catch((error) => {
+            console.log("Error: ", error.message);
+            alert("حدث خطأ أثناء تسجيل الدخول");
+            // في حال حدوث خطأ، إخفاء التحميل وإظهار الزر مرة أخرى
+            loadingMessage.style.display = "none";
+            loginButton.style.display = "block";
+        });
+    });
+</script>
+
+</body>
+</html>

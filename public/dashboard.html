@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الصفحة الرئيسية</title>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    
+    <style>
+        /* 1. خلفية الصفحة */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(120deg, #d4af37, #cd7f32);
+            animation: gradientBackground 10s ease infinite;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientBackground {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 2. شريط التنقل */
+        .navbar {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .navbar .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #d4af37;
+        }
+
+        .navbar .menu {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .navbar .menu a,
+        .navbar .menu .icon {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .navbar .menu a:hover,
+        .navbar .menu .icon:hover {
+            color: #d4af37;
+            transform: scale(1.1);
+        }
+
+        .navbar .menu .icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .navbar .menu .icon:hover {
+            background-color: #d4af37;
+        }
+
+        .navbar .menu .profile-img {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .navbar .menu .profile-img:hover {
+            transform: scale(1.1);
+        }
+
+        /* 3. الشريط الجانبي */
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #cd7f32; /* اللون الثابت */
+            z-index: 1000;
+            overflow-x: hidden;
+            transition: 0.3s;
+            padding-top: 60px;
+        }
+
+        .sidebar a {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #fff;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            color: #d4af37;
+        }
+
+        /* 5. الأيقونة */
+        .menu-icon {
+            font-size: 18px;
+            color: white;
+            cursor: pointer;
+            display: block;
+            z-index: 1100;
+            padding: 6px;
+            border-radius: 50%;
+            transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s ease;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .menu-icon:hover {
+            background-color: #d4af37;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .menu-icon:active {
+            transform: scale(0.95);
+            background-color: #b59b27;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar .menu-icon {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 18px;
+        }
+
+        /* نافذة الرفع */
+        .upload-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            z-index: 1100;
+            width: 300px;
+            text-align: center;
+        }
+
+        .upload-popup button {
+            background-color: #d4af37;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        .upload-popup button:hover {
+            transform: scale(1.1);
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* نافذة الخلفية */
+        .popup-background {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        /* نافذة تفاصيل المنشور */
+        .details-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            z-index: 1100;
+            width: 300px;
+            text-align: center;
+        }
+
+        .details-popup input,
+        .details-popup textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .details-popup .publish-btn {
+            background-color: #d4af37;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .details-popup .publish-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* input file */
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<!-- شريط التنقل -->
+<div class="navbar">
+    <span class="menu-icon" onclick="toggleNav()"><i class="fas fa-bars"></i></span>
+    <div class="logo">Eridu</div>
+    <div class="menu">
+        <span class="icon" title="إضافة منشور" onclick="showUploadPopup()"><i class="fas fa-plus"></i></span>
+        <span class="icon" title="الإشعارات"><i class="fas fa-bell"></i></span>
+        <img src="default-profile.png" alt="Profile" class="profile-img" id="profileImg" onclick="goToProfile()">
+        <a href="#" id="logoutLink" title="تسجيل الخروج"><i class="fas fa-sign-out-alt"></i></a>
+    </div>
+</div>
+
+<!-- الشريط الجانبي -->
+<div id="mySidebar" class="sidebar">
+    <span class="menu-icon" onclick="toggleNav()"><i class="fas fa-bars"></i></span>
+    <a href="#">الرئيسية</a>
+    <a href="#">ملفي الشخصي</a>
+    <a href="#">الإعدادات</a>
+    <a href="#">مساعدة</a>
+</div>
+
+<!-- نافذة الرفع -->
+<div class="popup-background" id="popupBackground" onclick="hideUploadPopup()"></div>
+<div class="upload-popup" id="uploadPopup">
+    <h3>اختر نوع المنشور</h3>
+    <button onclick="openImagePicker()">رفع صورة</button>
+    <button onclick="openVideoPicker()">رفع فيديو</button>
+</div>
+
+<!-- نافذة تفاصيل المنشور -->
+<div id="detailsPopup" class="details-popup">
+    <h3>تفاصيل المنشور</h3>
+    <input type="text" id="postTitle" placeholder="عنوان المنشور" />
+    <textarea id="postDescription" placeholder="وصف المنشور"></textarea>
+    <button class="publish-btn" onclick="publishPost()">نشر المنشور</button>
+</div>
+
+<!-- الاستوديو لرفع الصورة والفيديو -->
+<input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload()" />
+<input type="file" id="videoInput" accept="video/*" onchange="handleVideoUpload()" />
+
+
+
+<!-- منطقة عرض المنشورات -->
+<div id="postsContainer" style="margin: 20px; padding: 10px;">
+    <!-- المنشورات ستُضاف هنا ديناميكيًا -->
+</div>
+
+<script>
+    // إعداد Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL8RMf_qcV5NhGGaVoFRGUPCIDH08m-w4",
+        authDomain: "erido-332b4.firebaseapp.com",
+        projectId: "erido-332b4",
+        storageBucket: "erido-332b4.firebasestorage.app",
+        messagingSenderId: "297084740609",
+        appId: "1:297084740609:web:0b34d8d756057fb5c18c00"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // جلب معلومات المستخدم
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            const profileImg = document.getElementById("profileImg");
+            if (user.photoURL) {
+                profileImg.src = user.photoURL;
+            } else {
+                profileImg.src = "default-profile.png"; // صورة افتراضية
+            }
+        } else {
+            window.location.href = '/login.html'; // إعادة توجيه للمستخدم في حال عدم تسجيل الدخول
+        }
+    });
+
+    // التعامل مع تسجيل الخروج
+    document.getElementById('logoutLink').addEventListener("click", (e) => {
+        e.preventDefault();
+        auth.signOut().then(() => {
+            window.location.href = '/login.html'; // توجيه المستخدم بعد تسجيل الخروج
+        }).catch((error) => {
+            console.log("Error: ", error.message);
+        });
+    });
+
+    // فتح و إغلاق الشريط الجانبي
+    function openNav() {
+        document.getElementById("mySidebar").style.width = "250px";
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeNav() {
+        document.getElementById("mySidebar").style.width = "0";
+        document.body.style.overflow = "auto";
+    }
+
+    function toggleNav() {
+        const sidebar = document.getElementById("mySidebar");
+        if (sidebar.style.width === "250px") {
+            closeNav();
+        } else {
+            openNav();
+        }
+    }
+
+    function goToProfile() {
+        window.location.href = '/profile.html'; // الانتقال إلى صفحة الملف الشخصي
+    }
+
+    // إظهار نافذة التحميل
+    function showUploadPopup() {
+        document.getElementById("popupBackground").style.display = "block";
+        document.getElementById("uploadPopup").style.display = "block";
+    }
+
+    // إخفاء نافذة التحميل
+    function hideUploadPopup() {
+        document.getElementById("popupBackground").style.display = "none";
+        document.getElementById("uploadPopup").style.display = "none";
+    }
+
+    // فتح نافذة اختيار الصورة
+    function openImagePicker() {
+        document.getElementById("imageInput").click();
+        hideUploadPopup(); // إغلاق النافذة بعد اختيار الصورة
+    }
+
+    // فتح نافذة اختيار الفيديو
+    function openVideoPicker() {
+        document.getElementById("videoInput").click();
+        hideUploadPopup(); // إغلاق النافذة بعد اختيار الفيديو
+    }
+
+    // معالجة رفع الصورة
+    function handleImageUpload() {
+        const file = document.getElementById("imageInput").files[0];
+        console.log("تم اختيار صورة:", file);
+        // إظهار نافذة تفاصيل المنشور
+        showDetailsPopup();
+    }
+
+    // معالجة رفع الفيديو
+    function handleVideoUpload() {
+        const file = document.getElementById("videoInput").files[0];
+        console.log("تم اختيار فيديو:", file);
+        // إظهار نافذة تفاصيل المنشور
+        showDetailsPopup();
+    }
+
+    // إظهار نافذة تفاصيل المنشور
+    function showDetailsPopup() {
+        document.getElementById("detailsPopup").style.display = "block";
+    }
+
+    // نشر المنشور
+    function publishPost() {
+    const title = document.getElementById("postTitle").value;
+    const description = document.getElementById("postDescription").value;
+
+    if (!title || !description) {
+        alert("يرجى ملء العنوان والوصف!");
+        return;
+    }
+
+    const fileInput = document.getElementById("imageInput").files[0] || document.getElementById("videoInput").files[0];
+    if (!fileInput) {
+        alert("يرجى اختيار صورة أو فيديو!");
+        return;
+    }
+
+    const fileType = fileInput.type.startsWith("image") ? "image" : "video";
+    const formData = new FormData();
+    formData.append("user_name", firebase.auth().currentUser.displayName || "اسم المستخدم غير محدد");
+    formData.append("user_image", firebase.auth().currentUser.photoURL || "default-profile.png");
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("file_type", fileType);
+    formData.append("file", fileInput);
+
+    fetch("http://localhost:3000/api/posts", {
+        method: "POST",
+        body: formData,
+    })
+        .then((response) => response.text())
+        .then((data) => {
+            alert(data);
+            // إعادة تعيين الحقول
+            document.getElementById("postTitle").value = "";
+            document.getElementById("postDescription").value = "";
+            document.getElementById("imageInput").value = "";
+            document.getElementById("videoInput").value = "";
+
+            // إخفاء نافذة التفاصيل
+            hideDetailsPopup();
+        })
+        .catch((error) => {
+            console.error("خطأ:", error);
+            alert("حدث خطأ أثناء نشر المنشور.");
+        });
+
+
+        const postsContainer = document.getElementById("postsContainer");
+
+        // إنشاء منشور جديد
+        const postDiv = document.createElement("div");
+        postDiv.style.marginBottom = "20px";
+        postDiv.style.padding = "15px";
+        postDiv.style.background = "#fff";
+        postDiv.style.borderRadius = "10px";
+        postDiv.style.boxShadow = "0px 5px 10px rgba(0, 0, 0, 0.1)";
+        postDiv.style.maxWidth = "600px"; // الحد الأقصى لعرض المنشور
+        postDiv.style.margin = "10px auto"; // توسيط المنشور داخل الصفحة
+
+        // إضافة صورة الملف الشخصي واسم المستخدم
+        const userInfoDiv = document.createElement("div");
+        userInfoDiv.style.display = "flex";
+        userInfoDiv.style.alignItems = "center";
+        userInfoDiv.style.marginBottom = "15px";
+
+        const userImage = document.createElement("img");
+        userImage.src = firebase.auth().currentUser.photoURL || "default-profile.png"; // استخدام صورة المستخدم من Firebase
+        userImage.style.width = "40px";
+        userImage.style.height = "40px";
+        userImage.style.borderRadius = "50%";
+        userImage.style.marginRight = "10px";
+        userInfoDiv.appendChild(userImage);
+
+        const userNameElement = document.createElement("span");
+        userNameElement.textContent = firebase.auth().currentUser.displayName || "اسم المستخدم غير محدد"; // استخدام اسم المستخدم من Firebase
+        userNameElement.style.fontSize = "1.1rem";
+        userNameElement.style.fontWeight = "bold";
+        userNameElement.style.color = "#333";
+        userInfoDiv.appendChild(userNameElement);
+
+        postDiv.appendChild(userInfoDiv);
+
+        // إضافة العنوان
+        const titleElement = document.createElement("h3");
+        titleElement.textContent = title;
+        titleElement.style.fontSize = "1.5rem";
+        titleElement.style.fontWeight = "bold";
+        titleElement.style.marginBottom = "10px";
+        postDiv.appendChild(titleElement);
+
+        // إضافة الوصف
+        const descriptionElement = document.createElement("p");
+        descriptionElement.textContent = description;
+        descriptionElement.style.fontSize = "1rem";
+        descriptionElement.style.color = "#555";
+        descriptionElement.style.marginBottom = "10px";
+        postDiv.appendChild(descriptionElement);
+
+        // إضافة الوسائط (صورة أو فيديو)
+        if (fileType === "image") {
+            const imgElement = document.createElement("img");
+            imgElement.src = URL.createObjectURL(fileInput);
+            imgElement.style.width = "100%";
+            imgElement.style.height = "auto";
+            imgElement.style.borderRadius = "10px";
+            imgElement.style.marginTop = "10px";
+            postDiv.appendChild(imgElement);
+        } else if (fileType === "video") {
+            const videoElement = document.createElement("video");
+            videoElement.controls = true;
+            videoElement.src = URL.createObjectURL(fileInput);
+            videoElement.style.width = "100%";
+            videoElement.style.height = "auto";
+            videoElement.style.borderRadius = "10px";
+            videoElement.style.marginTop = "10px";
+            postDiv.appendChild(videoElement);
+        }
+
+        // إضافة الأيقونات أسفل الفيديو
+        // إضافة الأيقونات أسفل الفيديو
+// إضافة الأيقونات أسفل الفيديو
+// إضافة الأيقونات أسفل الفيديو
+const postActions = document.createElement("div");
+postActions.style.marginTop = "15px";
+postActions.style.display = "flex";
+postActions.style.justifyContent = "space-between";
+postActions.style.fontSize = "1rem";
+postActions.style.color = "#555";
+
+const likeButton = document.createElement("span");
+likeButton.innerHTML = '<i class="far fa-thumbs-up"></i> إعجاب'; // أيقونة غير مملوءة
+likeButton.style.cursor = "pointer";
+likeButton.style.transition = "color 0.3s ease"; // تأثير تغيير اللون
+
+// تحميل الصوت
+const likeSound = new Audio("https://www.soundjay.com/button/beep-08a.mp3"); // رابط مباشر لصوت الإعجاب
+
+// إضافة تأثير الإعجاب
+likeButton.addEventListener("click", function (e) {
+    const likeIcon = likeButton.querySelector("i");
+    if (likeIcon.classList.contains("far")) {
+        // تبديل إلى أيقونة مملوءة وتغيير اللون إلى الذهبي
+        likeIcon.classList.remove("far");
+        likeIcon.classList.add("fas");
+        likeButton.style.color = "gold";
+
+        // تشغيل الصوت
+        likeSound.currentTime = 0; // إعادة الصوت من البداية عند كل نقر
+        likeSound.play();
+
+        // إضافة تأثير "إعجاب"
+        const effectContainer = document.createElement("div");
+        effectContainer.style.position = "absolute";
+        effectContainer.style.top = `${e.clientY - 50}px`;
+        effectContainer.style.left = `${e.clientX}px`;
+        effectContainer.style.pointerEvents = "none";
+
+        for (let i = 0; i < 5; i++) {
+            const likeEffect = document.createElement("div");
+            likeEffect.innerHTML = '<i class="fas fa-thumbs-up"></i>';
+            likeEffect.style.position = "absolute";
+            likeEffect.style.fontSize = "1.5rem";
+            likeEffect.style.color = `hsl(50, 100%, ${50 + i * 10}%)`; // درجات لون ذهبي
+            likeEffect.style.animation = `float-up 1s ease ${i * 0.1}s forwards`;
+
+            effectContainer.appendChild(likeEffect);
+        }
+
+        document.body.appendChild(effectContainer);
+
+        // إزالة التأثير بعد اكتمال الحركة
+        setTimeout(() => {
+            document.body.removeChild(effectContainer);
+        }, 1000);
+    } else {
+        // إعادة إلى الحالة الأصلية (غير مملوءة)
+        likeIcon.classList.remove("fas");
+        likeIcon.classList.add("far");
+        likeButton.style.color = "#555";
+    }
+});
+
+const commentButton = document.createElement("span");
+commentButton.innerHTML = '<i class="far fa-comment"></i> تعليق'; // أيقونة غير مملوءة
+commentButton.style.cursor = "pointer";
+
+const shareButton = document.createElement("span");
+shareButton.innerHTML = '<i class="far fa-share-square"></i> مشاركة'; // أيقونة غير مملوءة
+shareButton.style.cursor = "pointer";
+
+postActions.appendChild(likeButton);
+postActions.appendChild(commentButton);
+postActions.appendChild(shareButton);
+
+postDiv.appendChild(postActions);
+
+// إضافة الحركة باستخدام CSS
+const style = document.createElement("style");
+style.innerHTML = `
+@keyframes float-up {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+}
+`;
+document.head.appendChild(style);
+
+
+
+
+
+
+        // إضافة المنشور إلى منطقة المنشورات
+        postsContainer.prepend(postDiv);
+
+        // إعادة تعيين الحقول
+        document.getElementById("postTitle").value = "";
+        document.getElementById("postDescription").value = "";
+        document.getElementById("imageInput").value = "";
+        document.getElementById("videoInput").value = "";
+
+        // إخفاء نافذة التفاصيل
+        hideDetailsPopup();
+
+        alert("تم نشر المنشور بنجاح!");
+    }
+
+    // إخفاء نافذة تفاصيل المنشور
+    function hideDetailsPopup() {
+        document.getElementById("detailsPopup").style.display = "none";
+    }
+
+
+
+    // جلب المنشورات من الخادم
+function loadPosts() {
+    fetch('/api/posts')  // استدعاء المسار في الخادم
+        .then(response => response.json())  // تحويل البيانات إلى JSON
+        .then(posts => {
+            const postsContainer = document.getElementById("postsContainer");
+
+            // التأكد من أنه إذا كانت هناك منشورات قديمة، نقوم بإزالتها
+            postsContainer.innerHTML = '';
+
+            // إضافة المنشورات الجديدة
+            posts.forEach(post => {
+                const postDiv = document.createElement("div");
+                postDiv.style.marginBottom = "20px";
+                postDiv.style.padding = "15px";
+                postDiv.style.background = "#fff";
+                postDiv.style.borderRadius = "10px";
+                postDiv.style.boxShadow = "0px 5px 10px rgba(0, 0, 0, 0.1)";
+                postDiv.style.maxWidth = "600px"; // الحد الأقصى لعرض المنشور
+                postDiv.style.margin = "10px auto"; // توسيط المنشور داخل الصفحة
+
+                // إضافة صورة الملف الشخصي واسم المستخدم
+                const userInfoDiv = document.createElement("div");
+                userInfoDiv.style.display = "flex";
+                userInfoDiv.style.alignItems = "center";
+                userInfoDiv.style.marginBottom = "15px";
+
+                const userImage = document.createElement("img");
+                userImage.src = post.user_image || "default-profile.png"; // صورة المستخدم
+                userImage.style.width = "40px";
+                userImage.style.height = "40px";
+                userImage.style.borderRadius = "50%";
+                userImage.style.marginRight = "10px";
+                userInfoDiv.appendChild(userImage);
+
+                const userNameElement = document.createElement("span");
+                userNameElement.textContent = post.user_name || "اسم المستخدم غير محدد"; // اسم المستخدم
+                userNameElement.style.fontSize = "1.1rem";
+                userNameElement.style.fontWeight = "bold";
+                userNameElement.style.color = "#333";
+                userInfoDiv.appendChild(userNameElement);
+
+                postDiv.appendChild(userInfoDiv);
+
+                // إضافة العنوان
+                const titleElement = document.createElement("h3");
+                titleElement.textContent = post.title;
+                titleElement.style.fontSize = "1.5rem";
+                titleElement.style.fontWeight = "bold";
+                titleElement.style.marginBottom = "10px";
+                postDiv.appendChild(titleElement);
+
+                // إضافة الوصف
+                const descriptionElement = document.createElement("p");
+                descriptionElement.textContent = post.description;
+                descriptionElement.style.fontSize = "1rem";
+                descriptionElement.style.color = "#555";
+                descriptionElement.style.marginBottom = "10px";
+                postDiv.appendChild(descriptionElement);
+
+                // إضافة الوسائط (صورة أو فيديو)
+                if (post.file_type === "image") {
+                    const imgElement = document.createElement("img");
+                    imgElement.src = post.file_url;
+                    imgElement.style.width = "100%";
+                    imgElement.style.height = "auto";
+                    imgElement.style.borderRadius = "10px";
+                    imgElement.style.marginTop = "10px";
+                    postDiv.appendChild(imgElement);
+                } else if (post.file_type === "video") {
+                    const videoElement = document.createElement("video");
+                    videoElement.controls = true;
+                    videoElement.src = post.file_url;
+                    videoElement.style.width = "100%";
+                    videoElement.style.height = "auto";
+                    videoElement.style.borderRadius = "10px";
+                    videoElement.style.marginTop = "10px";
+                    postDiv.appendChild(videoElement);
+                }
+
+                // إضافة المنشور إلى الـ DOM
+                postsContainer.prepend(postDiv);  // نضع المنشورات في البداية داخل الحاوية
+            });
+        })
+        .catch(error => {
+            console.error('خطأ في جلب المنشورات:', error);
+        });
+}
+
+// استدعاء الدالة عند تحميل الصفحة لعرض المنشورات
+document.addEventListener("DOMContentLoaded", loadPosts);
+
+</script>
+
+
+
+</body>
+</html>

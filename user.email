@@ -1,0 +1,66 @@
+CREATE DATABASE eridu_db;
+
+USE eridu_db;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+MySQL Workbench
+
+
+نعم استخدم هذه لموقعي مثال على كود اللون:
+
+ذهب خفيف: #D4AF37
+برونزي: #CD7F32
+
+
+
+
+
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDL8RMf_qcV5NhGGaVoFRGUPCIDH08m-w4",
+    authDomain: "erido-332b4.firebaseapp.com",
+    projectId: "erido-332b4",
+    storageBucket: "erido-332b4.firebasestorage.app",
+    messagingSenderId: "297084740609",
+    appId: "1:297084740609:web:0b34d8d756057fb5c18c00"
+};
+
+// تهيئة Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+// زر تسجيل الدخول باستخدام Google Redirect
+const googleSigninButton = document.getElementById('google-signin');
+googleSigninButton.addEventListener('click', function() {
+    // عرض شاشة التحميل
+    document.getElementById('loading').style.display = 'flex';
+
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithRedirect(provider);
+});
+
+// التحقق من نتيجة تسجيل الدخول بعد إعادة التوجيه
+auth.getRedirectResult()
+    .then((result) => {
+        if (result.user) {
+            const user = result.user;
+            console.log("تم تسجيل الدخول بنجاح: ", user.displayName);
+
+            // إعادة التوجيه إلى الصفحة الرئيسية
+            window.location.href = "index.html";
+        }
+    })
+    .catch((error) => {
+        console.error("حدث خطأ أثناء تسجيل الدخول: " + error.message);
+        alert("حدث خطأ أثناء تسجيل الدخول: " + error.message);
+
+        // إخفاء شاشة التحميل في حالة الخطأ
+        document.getElementById('loading').style.display = 'none';
+    });

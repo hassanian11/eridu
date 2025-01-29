@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(120deg, #d4af37, #cd7f32);
+            min-height: 100vh;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .profile-container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .profile-container img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            border: 2px solid #d4af37;
+        }
+
+        .profile-container h1 {
+            font-size: 1.8rem;
+            margin: 10px 0;
+        }
+
+        .profile-container p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .profile-container a {
+            text-decoration: none;
+            color: #d4af37;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .profile-container a:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <img id="profileImg" src="default-profile.png" alt="Profile Image">
+        <h1 id="profileName">اسم المستخدم</h1>
+        <p id="profileEmail">البريد الإلكتروني</p>
+        <a href="/index.html"><i class="fas fa-arrow-left"></i> الرجوع إلى الصفحة الرئيسية</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script>
+        // إعداد Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDL8RMf_qcV5NhGGaVoFRGUPCIDH08m-w4",
+            authDomain: "erido-332b4.firebaseapp.com",
+            projectId: "erido-332b4",
+            storageBucket: "erido-332b4.firebasestorage.app",
+            messagingSenderId: "297084740609",
+            appId: "1:297084740609:web:0b34d8d756057fb5c18c00"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById('profileImg').src = user.photoURL || 'default-profile.png';
+                document.getElementById('profileName').textContent = user.displayName || 'مستخدم مجهول';
+                document.getElementById('profileEmail').textContent = user.email || 'لا يوجد بريد إلكتروني';
+            } else {
+                window.location.href = '/login.html'; // إعادة التوجيه إذا لم يكن مسجلاً
+            }
+        });
+    </script>
+</body>
+</html>
